@@ -1,0 +1,47 @@
+version: '3.9'
+
+services:
+  api: &main_app
+    build:
+      context: .
+      dockerfile: ./deploy/Dockerfile
+      target: prod
+    image: spartan_api_python:${spartan_api_python_VERSION:-latest}
+    restart: always
+    networks:
+      - default
+    ports:
+      - 8000:8000
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      RELOAD: False
+      PORT: 8000
+      REDIS_HOST: spartan_api_python-redis
+      ENVIRONMENT: production
+      HOST: 0.0.0.0
+
+  taskiq-worker:
+    <<: *main_app
+    ports: [ ]
+    labels: []
+    command:
+    - taskiq
+    - worker
+    - spartan_api_python.tkq:broker
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: bitnami/redis:6.2.5
+    hostname: "spartan_api_python-redis"
+    restart: always
+    environment:
+      ALLOW_EMPTY_PASSWORD: "yes"
+    healthcheck:
+      test: redis-cli ping
+      interval: 1s
+      timeout: 3s
+      retries: 50

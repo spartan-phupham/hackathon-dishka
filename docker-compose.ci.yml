@@ -1,0 +1,60 @@
+version: '3.6'
+services:
+  db:
+    image: postgis/postgis:14-3.3
+    restart: always
+    environment:
+      POSTGRES_USER: local
+      POSTGRES_PASSWORD: local
+      POSTGRES_DB: local
+    networks:
+      - api_net
+    command: postgres -N 500
+    ports:
+      - 5432:5432
+    volumes:
+      - type: tmpfs
+        target: /var/lib/postgresql/data
+
+  flyway:
+    image: flyway/flyway:9.8.1
+    networks:
+      - api_net
+    volumes:
+      - .:/flyway/sql
+
+  redis-cluster:
+    image: channguyen/redis-cluster:latest
+    restart: always
+    networks:
+      - api_net
+    ports:
+      - 30001:30001
+      - 30002:30002
+      - 30003:30003
+      - 30004:30004
+      - 30005:30005
+      - 30006:30006
+
+  mongo:
+    image: mongo:latest
+    restart: always
+    networks:
+      - api_net
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+      MONGO_INITDB_DATABASE: local
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb_data_container:/data/db
+
+volumes:
+  mongodb_data_container:
+  cache:
+    driver: local
+
+networks:
+  api_net:
+    name: ci_net
