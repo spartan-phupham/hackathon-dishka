@@ -4,7 +4,7 @@ from sqlalchemy.dialects.postgresql import TIMESTAMP
 from spartan_api_python.db.base import BaseTable
 
 
-class UserTable(BaseTable):
+class UserEntity(BaseTable):
     __tablename__ = "users"
     email = Column(String, unique=True, nullable=False)
     phone = Column(String, unique=True, nullable=True)

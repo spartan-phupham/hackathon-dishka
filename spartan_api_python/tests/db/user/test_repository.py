@@ -1,10 +1,10 @@
 import unittest
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, Engine
 from sqlalchemy.orm import sessionmaker, Session
 
 from spartan_api_python.db.user.repository import UserRepository
-from spartan_api_python.db.user.table import UserTable
+from spartan_api_python.db.user.table import UserEntity
 
 
 class UserRepositoryTest(unittest.TestCase):
@@ -12,17 +12,16 @@ class UserRepositoryTest(unittest.TestCase):
     repository: UserRepository
 
     def setUp(self):
-        session = self.session()
-        session.query(UserTable).delete()
-        self.repository = UserRepository(session=session)
-        self.engine.connect()
-        pass
+        with self.engine.connect():
+            session = self.session(self.engine)
+            session.query(UserEntity).delete()
+            self.repository = UserRepository(self.engine)
 
     def tearDown(self):
         pass
 
     def test_insert(self):
-        entity = UserTable(
+        entity = UserEntity(
             email="",
             status="active",
             level="user",
@@ -33,5 +32,19 @@ class UserRepositoryTest(unittest.TestCase):
         self.assertEqual(result.status, entity.status)
         self.assertEqual(result.phone, entity.phone)
 
-    def session(self) -> Session:
-        return sessionmaker(autoflush=True, bind=self.engine)()
+    def test_by_id(self):
+        entity = UserEntity(
+            email="",
+            status="active",
+            level="user",
+            phone="+18186264197"
+        )
+        result = self.repository.insert(entity=entity)
+        after = self.repository.by_id(result.id)
+        self.assertEqual(after.email, entity.email)
+        self.assertEqual(after.status, entity.status)
+        self.assertEqual(after.phone, entity.phone)
+
+    @staticmethod
+    def session(engine: Engine) -> Session:
+        return sessionmaker(autoflush=True, bind=engine)()

@@ -9,5 +9,6 @@ class HealthRouter:
         self.router = router
         self.router.add_api_route("/", self.health, methods=["GET"])
 
-    async def health(self) -> HealthResponse:
+    @staticmethod
+    async def health() -> HealthResponse:
         return HealthResponse(message="OK")

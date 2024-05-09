@@ -1,19 +1,24 @@
 import uuid
 
-from sqlalchemy.orm import Session
+from sqlalchemy import Engine
+from sqlalchemy.orm import sessionmaker
 
-from spartan_api_python.db.user.table import UserTable
+from spartan_api_python.db.user.table import UserEntity
 
 
 class UserRepository:
-    def __init__(self, session: Session):
-        self.session = session
+    def __init__(self, engine: Engine):
+        self.engine = engine
 
-    def insert(self, entity: UserTable) -> UserTable:
-        self.session.add(entity)
-        self.session.commit()
-        self.session.refresh(entity)
-        return entity
+    def insert(self, entity: UserEntity) -> UserEntity:
+        with self.engine.connect():
+            session = sessionmaker(autoflush=True, bind=self.engine)()
+            session.add(entity)
+            session.commit()
+            session.refresh(entity)
+            return entity
 
-    def by_id(self, id: uuid) -> UserTable:
-        return self.session.query(UserTable).get(id)
+    def by_id(self, id: uuid) -> UserEntity:
+        with self.engine.connect():
+            session = sessionmaker(autoflush=True, bind=self.engine)()
+            return session.query(UserEntity).get(id)
