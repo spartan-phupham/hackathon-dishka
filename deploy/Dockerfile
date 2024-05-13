@@ -1,10 +1,10 @@
-FROM python:3.9.6-slim-buster AS prod
+FROM python:3.12.3-slim-buster AS prod
 RUN apt-get update && apt-get install -y \
   gcc \
   && rm -rf /var/lib/apt/lists/*
 
 
-RUN pip install poetry==1.4.2
+RUN pip install poetry==1.8.3
 
 # Configuring poetry
 RUN poetry config virtualenvs.create false
@@ -24,7 +24,7 @@ RUN apt-get purge -y \
 COPY . /app/src/
 RUN poetry install --only main
 
-CMD ["/usr/local/bin/python", "-m", "spartan_api_python"]
+CMD ["/usr/local/bin/python", "-m", "service_platform_py"]
 
 FROM prod AS dev
 

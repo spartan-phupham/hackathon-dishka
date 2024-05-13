@@ -6,37 +6,37 @@ services:
       context: .
       dockerfile: ./deploy/Dockerfile
       target: prod
-    image: spartan_api_python:${spartan_api_python_VERSION:-latest}
+    image: service_platform_py:${service_platform_py_VERSION:-latest}
     restart: always
     networks:
-      - default
+    - default
     ports:
-      - 8000:8000
+    - 8000:8000
     depends_on:
       redis:
         condition: service_healthy
     environment:
-      RELOAD: False
+      RELOAD: false
       PORT: 8000
-      REDIS_HOST: spartan_api_python-redis
+      REDIS_HOST: service_platform_py-redis
       ENVIRONMENT: production
       HOST: 0.0.0.0
 
   taskiq-worker:
     <<: *main_app
-    ports: [ ]
+    ports: []
     labels: []
     command:
     - taskiq
     - worker
-    - spartan_api_python.tkq:broker
+    - service_platform_py.tkq:broker
     depends_on:
       redis:
         condition: service_healthy
 
   redis:
     image: bitnami/redis:6.2.5
-    hostname: "spartan_api_python-redis"
+    hostname: "service_platform_py-redis"
     restart: always
     environment:
       ALLOW_EMPTY_PASSWORD: "yes"
