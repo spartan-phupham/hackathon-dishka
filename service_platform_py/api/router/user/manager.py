@@ -16,16 +16,6 @@ class UserManager:
     def __init__(self, user_repository: UserRepository = Depends()):
         self.user_repository = user_repository
 
-    @staticmethod
-    async def sample() -> UserResponse:
-        return UserResponse(
-            id=uuid.UUID("00000000-0000-0000-0000-000000000000"),
-            phone="+1234567890",
-            email="chan@c0x12c.com",
-            status="active",
-            level="admin",
-        )
-
     async def by_id(
         self,
         user_id: str,

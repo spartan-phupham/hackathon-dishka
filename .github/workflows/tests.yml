@@ -49,7 +49,7 @@ jobs:
         echo "flyway.url=jdbc:postgresql://0.0.0.0:5432/db_py" >> flyway.conf
         echo "flyway.user=local" >> flyway.conf
         echo "flyway.password=local" >> flyway.conf
-        echo "flyway.locations=filesystem:./sql" >> flyway.conf
+        echo "flyway.locations=filesystem:./" >> flyway.conf
 
     - name: Migrate
       run: |

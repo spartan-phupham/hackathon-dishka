@@ -72,7 +72,7 @@ async def dbsession(
 
 
 @pytest.fixture
-def fastapi_app(
+def api(
     dbsession: AsyncSession,
 ) -> FastAPI:
     """
@@ -87,7 +87,7 @@ def fastapi_app(
 
 @pytest.fixture
 async def client(
-    fastapi_app: FastAPI,
+    api: FastAPI,
     anyio_backend: Any,
 ) -> AsyncGenerator[AsyncClient, None]:
     """
@@ -96,7 +96,7 @@ async def client(
     :param fastapi_app: the application.
     :yield: client for the app.
     """
-    async with AsyncClient(app=fastapi_app, base_url="http://test") as ac:
+    async with AsyncClient(app=api, base_url="http://test") as ac:
         yield ac
 
 

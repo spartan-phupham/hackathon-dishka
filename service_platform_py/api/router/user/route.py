@@ -17,10 +17,6 @@ class UserRouter:
     def __init__(self, user_manager: UserManager = Depends()):
         self.manager = user_manager
 
-    @router.get("/sample")
-    async def sample(self) -> UserResponse:
-        return await self.manager.sample()
-
     @router.get("/by-id")
     async def by_id(
         self,
