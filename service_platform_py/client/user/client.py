@@ -13,15 +13,15 @@ from service_platform_py.client.base_client import (
 class UserClient(BaseClient):
     base_url = "http://0.0.0.0:8080"
 
-    @returns.json(list[UserResponse])
+    @returns.json(UserResponse)
     @get("/api/user/by-id")
-    async def by_id(self, user_id: Query("user_id")) -> UserResponse:
+    def by_id(self, user_id: Query("user_id")) -> UserResponse:
         """Retrieves user by id"""
         pass
 
     @returns.json(list[UserResponse])
     @get("/api/user/")
-    async def get_users(
+    def get_users(
         self,
         limit: Query("limit"),
         skip: Query("user_id"),
