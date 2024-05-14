@@ -34,19 +34,6 @@ pytest-env = "^0.8.1"
 pytest-cov = "^4.0.0"
 faker="*"
 
-[tool.pytest.ini_options]
-addopts = """\
-    --verbose \
-    --log-level=DEBUG \
-    -p no:pytest_kiso \
-    --junitxml=reports/testReport.xml \
-    --cov="service_platform_py"
-"""
-env = [
-    "ENVIRONMENT=test",
-    "DB_NAME=test"
-]
-
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

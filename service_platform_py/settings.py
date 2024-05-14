@@ -28,16 +28,14 @@ class Environment(str, Enum):
     LOCAL = "local"
     DEV = "dev"
     PRODUCTION = "production"
-    TEST = "test"
 
 
 def load_environment_keys(env_type: str) -> str:
-    if env_type == Environment.LOCAL:
-        return ".envs/fastapi/.env.local"
-    elif env_type == Environment.TEST:
-        return ".envs/fastapi/.env.test"
-    else:
-        return ".envs/fastapi/.env"
+    return (
+        ".envs/fastapi/.env.local"
+        if env_type == Environment.LOCAL
+        else ".envs/fastapi/.env"
+    )
 
 
 class Settings(BaseSettings):

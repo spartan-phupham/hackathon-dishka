@@ -110,6 +110,7 @@ celerybeat.pid
 
 # Environments
 .envs/fastapi/.env
+.envs/fastapi/.env.test
 .venv
 env/
 venv/

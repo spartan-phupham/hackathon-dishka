@@ -32,6 +32,3 @@ repos:
     language: system
     types: [python]
     pass_filenames: false
-    env:
-      ENVIRONMENT: test
-      DB_NAME: test

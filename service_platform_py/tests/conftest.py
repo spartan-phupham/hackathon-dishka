@@ -4,9 +4,9 @@ import pytest
 from fastapi import FastAPI
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import (
+    async_sessionmaker,
     AsyncEngine,
     AsyncSession,
-    async_sessionmaker,
     create_async_engine,
 )
 
@@ -14,12 +14,9 @@ from service_platform_py.api.application import get_app
 from service_platform_py.api.router.user.manager import UserManager
 from service_platform_py.db.user.repository import UserRepository
 from service_platform_py.service.postgres.dependency import (
-    create_database,
-    drop_database,
     get_db_session,
-    migrate,
 )
-from service_platform_py.settings import Environment, settings
+from service_platform_py.settings import settings
 
 
 @pytest.fixture(scope="session")
@@ -39,19 +36,11 @@ async def _engine() -> AsyncGenerator[AsyncEngine, None]:
 
     :yield: new engine.
     """
-    if settings.environment == Environment.TEST:
-        await create_database()
-
     engine = create_async_engine(str(settings.postgres_url))
-    async with engine.begin():
-        if settings.environment == Environment.TEST:
-            migrate()
     try:
         yield engine
     finally:
         await engine.dispose()
-        if settings.environment == Environment.TEST:
-            await drop_database()
 
 
 @pytest.fixture

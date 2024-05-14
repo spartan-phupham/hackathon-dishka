@@ -35,6 +35,36 @@ jobs:
       run: |
         sudo snap install flyway
         sudo ln -s /snap/bin/flyway /usr/local/bin/flyway
+    - name: List directory contents
+      run: ls -l
+
+    - name: Create Flyway Config
+      run: |
+        cd sql
+        echo "flyway.sqlMigrationPrefix=" >> flyway.conf
+        echo "flyway.sqlMigrationSeparator=-" >> flyway.conf
+        echo "flyway.table=schema_version" >> flyway.conf
+        echo "flyway.cleanDisabled=false" >> flyway.conf
+        echo "flyway.mixed=true" >> flyway.conf
+        echo "flyway.url=jdbc:postgresql://0.0.0.0:5432/db_py" >> flyway.conf
+        echo "flyway.user=local" >> flyway.conf
+        echo "flyway.password=local" >> flyway.conf
+        echo "flyway.locations=filesystem:./" >> flyway.conf
+
+    - name: Migrate
+      run: |
+        cd sql
+        flyway -configFiles=flyway.conf clean migrate
 
     - name: Run pytest check
-      run: poetry run pytest
+      run: poetry run pytest -vv --cov="service_platform_py" .
+      env:
+        ADDRESS: "0.0.0.0"
+        SERVICE_FEATURE_FLAG_DB_HOST: localhost
+        ENABLE_DB: true
+        DB_URL: localhost
+        DB_NAME: db_py
+        DB_USERNAME: local
+        DB_PASSWORD: local
+        DB_PORT: 5432
+        ENABLE_REDIS: false
