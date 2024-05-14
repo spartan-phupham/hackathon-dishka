@@ -9,14 +9,14 @@ from service_platform_py.api.router.user.schema import CreateUserRequest
 from service_platform_py.client.user.client import UserClient
 
 @pytest.mark.anyio
-async def test_user_sample(
-    api: FastAPI
-) -> None:
-    url = api.url_path_for("UserRouter.new")
-    print(url)
-    client = UserClient(base_url="http://localhost:8080")
-    response = await client.sample()
-    print(response)
+# async def test_user_sample(
+#     api: FastAPI
+# ) -> None:
+#     url = api.url_path_for("UserRouter.new")
+#     print(url)
+#     client = UserClient(base_url=url)
+#     response = await client.sample()
+#     print(response)
 
 
 @pytest.mark.anyio

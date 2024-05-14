@@ -42,3 +42,11 @@ To run the project use this set of commands:
 poetry install
 poetry run python -m service_platform_py
 ```
+
+## Testing
+
+```bash
+poetry run pytest -vv --cov="service_platform_py"
+pytest -vv service_platform_py/tests/test_user.py::test_user_creation
+```
+Or run the test directly in IDE (Pycharm/VSCode)
