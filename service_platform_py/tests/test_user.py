@@ -10,12 +10,12 @@ from service_platform_py.api.router.user.schema import CreateUserRequest
 
 @pytest.mark.anyio
 async def test_user_creation(
-    fastapi_app: FastAPI,
+    api: FastAPI,
     client: AsyncClient,
     user_manager: UserManager,
 ) -> None:
     """Tests dummy instance creation."""
-    url = fastapi_app.url_path_for("UserRouter.new")
+    url = api.url_path_for("UserRouter.new")
     response = await client.post(
         url,
         json={
@@ -34,7 +34,7 @@ async def test_user_creation(
 
 @pytest.mark.anyio
 async def test_get_users(
-    fastapi_app: FastAPI,
+    api: FastAPI,
     client: AsyncClient,
     user_manager: UserManager,
 ) -> None:
@@ -46,7 +46,7 @@ async def test_get_users(
                 phone=f"123456{i}",
             ),
         )
-    url = fastapi_app.url_path_for("UserRouter.get_users")
+    url = api.url_path_for("UserRouter.get_users")
     response = await client.get(url)
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
@@ -55,7 +55,7 @@ async def test_get_users(
 
 @pytest.mark.anyio
 async def test_get_user(
-    fastapi_app: FastAPI,
+    api: FastAPI,
     client: AsyncClient,
     user_manager: UserManager,
 ) -> None:
@@ -66,7 +66,7 @@ async def test_get_user(
             phone="123456",
         ),
     )
-    url = fastapi_app.url_path_for("UserRouter.by_id")
+    url = api.url_path_for("UserRouter.by_id")
     response = await client.get(url, params=QueryParams(user_id=user.id))
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
@@ -75,7 +75,7 @@ async def test_get_user(
 
 @pytest.mark.anyio
 async def test_remove_user(
-    fastapi_app: FastAPI,
+    api: FastAPI,
     client: AsyncClient,
     user_manager: UserManager,
 ) -> None:
@@ -87,7 +87,7 @@ async def test_remove_user(
         ),
     )
 
-    url = fastapi_app.url_path_for("UserRouter.remove_user")
+    url = api.url_path_for("UserRouter.remove_user")
     response = await client.delete(url, params=QueryParams(user_id=user.id))
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
