@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -19,9 +20,10 @@ class CoreModel(BaseModel):
 
 
 class OrmModel(CoreModel):
-    id: int
+    id: uuid.UUID
     created_at: datetime
     updated_at: datetime | None
+    deleted_at: datetime | None
 
     class Config(CoreModel.Config):
         from_attributes = True

@@ -3,6 +3,7 @@ import uuid
 from fastapi import Depends
 
 from service_platform_py.api.router.user.schema import (
+    DeletedUserResponse,
     UserResponse,
     CreateUserRequest,
     CreateUserResponse,
@@ -49,6 +50,10 @@ class UserManager:
             skip=skip,
         )
         return [self.__to_user_response(user) for user in users]
+
+    async def remove(self, user_id: str) -> DeletedUserResponse:
+        user: UserEntity = await self.user_repository.remove(user_id)
+        return DeletedUserResponse(msg="Deleted user successfully", id=user.id)
 
     @staticmethod
     def __to_user_response(user: UserEntity) -> UserResponse:

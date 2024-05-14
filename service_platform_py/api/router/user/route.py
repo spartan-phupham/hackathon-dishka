@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Body
 
 from service_platform_py.api.router.user.manager import UserManager
 from service_platform_py.api.router.user.schema import (
+    DeletedUserResponse,
     UserResponse,
     CreateUserRequest,
     CreateUserResponse,
@@ -37,7 +38,14 @@ class UserRouter:
     @router.get("/")
     async def get_users(
         self,
-        limit: int = 0,
-        skip: int = 10,
+        limit: int = 10,
+        skip: int = 0,
     ) -> list[UserResponse]:
         return await self.manager.get_users(limit, skip)
+
+    @router.delete("/")
+    async def remove_user(
+        self,
+        user_id: str,
+    ) -> DeletedUserResponse:
+        return await self.manager.remove(user_id)

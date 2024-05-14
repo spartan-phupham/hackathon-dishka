@@ -23,3 +23,7 @@ class BaseTable(DeclarativeBase):
         onupdate=func.now(),
         nullable=True,
     )
+    deleted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )

@@ -3,7 +3,7 @@ from typing import Any, Generic, List, Optional, Type, TypeVar
 
 from fastapi import HTTPException, Depends
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.base import ExecutableOption
@@ -38,10 +38,10 @@ class BaseRepository(Generic[EntityType]):
             await self.database.rollback()
             raise KEY_EXISTS from None
 
-    async def get(self, id: Any) -> Optional[EntityType]:
-        obj_db = await self.database.get(self.entity, id)
+    async def get(self, obj_id: Any) -> Optional[EntityType]:
+        obj_db = await self.database.get(self.entity, obj_id)
         if not obj_db:
-            self.raise_not_found(id)
+            self.raise_not_found(obj_id)
         return obj_db
 
     async def get_multi(
@@ -50,21 +50,30 @@ class BaseRepository(Generic[EntityType]):
         limit: int = 100,
     ) -> List[EntityType]:
         db_models = await self.database.execute(
-            select(self.entity).limit(limit).offset(skip).order_by(self.entity.id),
+            select(self.entity)
+            .where(self.entity.deleted_at.is_(None))
+            .limit(limit)
+            .offset(skip)
+            .order_by(self.entity.id),
         )
         return list(db_models.scalars().fetchall())
 
-    async def remove(self, id: int) -> EntityType:
-        obj = await self.database.get(self.entity, id)
+    async def remove(self, obj_id: Any) -> EntityType:
+        obj = await self.database.get(self.entity, obj_id)
         if not obj:
-            self.raise_not_found(id)
-        await self.database.delete(obj)
+            self.raise_not_found(obj_id)
+        await self.update(
+            obj_in={
+                "deleted_at": func.now(),
+            },
+            obj_id=obj.id,
+        )
         await self.save(obj)
         return obj
 
-    async def update(self, obj_in: SchemaType | dict, id: int):
+    async def update(self, obj_in: SchemaType | dict, obj_id: Any):
         try:
-            obj: EntityType = await self.get(id)
+            obj: EntityType = await self.get(obj_id)
             if type(obj_in) == SchemaType:
                 for key, value in obj_in.dict(exclude={self.entity.id}).items():
                     if hasattr(obj, key):
@@ -89,7 +98,12 @@ class BaseRepository(Generic[EntityType]):
         condition: list[bool],
         options: ExecutableOption = None,
     ) -> List[EntityType]:
-        query = select(self.entity).filter(*condition).order_by(self.entity.id)
+        query = (
+            select(self.entity)
+            .filter(*condition)
+            .where(self.entity.deleted_at.is_(None))
+            .order_by(self.entity.id)
+        )
         if options:
             query = query.options(options)
         db_models = await self.database.execute(
@@ -99,7 +113,9 @@ class BaseRepository(Generic[EntityType]):
 
     async def find(self, condition: list[bool]) -> EntityType:
         db_models = await self.database.execute(
-            select(self.entity).filter(*condition),
+            select(self.entity)
+            .filter(*condition)
+            .where(self.entity.deleted_at.is_(None)),
         )
         data = db_models.scalars().first()
         if not data:

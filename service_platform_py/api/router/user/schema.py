@@ -1,6 +1,16 @@
 import uuid
+from datetime import datetime
 
-from service_platform_py.core.base_schema import CoreModel
+from service_platform_py.core.base_schema import CoreModel, OrmModel
+
+
+# Same as Entity
+class User(OrmModel):
+    email: str
+    phone: str
+    status: str
+    level: str
+    logged_in_at: datetime | None
 
 
 class UserResponse(CoreModel):
@@ -21,3 +31,7 @@ class CreateUserRequest(CoreModel):
 class CreateUserResponse(CoreModel):
     msg: str
     id: uuid.UUID
+
+
+class DeletedUserResponse(CreateUserResponse):
+    pass
