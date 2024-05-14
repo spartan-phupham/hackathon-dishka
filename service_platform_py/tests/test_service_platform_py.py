@@ -7,7 +7,7 @@ from starlette import status
 @pytest.mark.anyio
 async def test_health(
     client: AsyncClient,
-    api: FastAPI
+    api: FastAPI,
 ) -> None:
     """
     Checks the health endpoint.

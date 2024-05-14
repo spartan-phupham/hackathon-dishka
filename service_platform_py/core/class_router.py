@@ -191,7 +191,8 @@ def _update_cbv_route_endpoint_signature(
     old_endpoint = route.endpoint
     old_signature = inspect.signature(old_endpoint)
     old_parameters: List[inspect.Parameter] = list(old_signature.parameters.values())
-    if len(old_parameters) > 1:
+    # Static method
+    if len(old_parameters) > 0:
         old_first_parameter = old_parameters[0]
         new_first_parameter = old_first_parameter.replace(default=Depends(cls))
         new_parameters = [new_first_parameter] + [
@@ -201,3 +202,5 @@ def _update_cbv_route_endpoint_signature(
 
         new_signature = old_signature.replace(parameters=new_parameters)
         setattr(route.endpoint, "__signature__", new_signature)
+    else:
+        setattr(route.endpoint, "__signature__", old_signature)

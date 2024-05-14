@@ -1,5 +1,3 @@
-import uuid
-
 from fastapi import Depends
 
 from service_platform_py.api.router.user.schema import (

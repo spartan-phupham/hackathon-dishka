@@ -1,14 +1,14 @@
 import pytest
+from faker import Faker
 from fastapi import FastAPI
-from httpx import AsyncClient
+from httpx import AsyncClient, QueryParams
 from starlette import status
-from httpx import QueryParams
 
 from service_platform_py.api.router.user.manager import UserManager
 from service_platform_py.api.router.user.schema import CreateUserRequest
-from service_platform_py.client.user.client import UserClient
 
-@pytest.mark.anyio
+faker = Faker()
+
 # async def test_user_sample(
 #     api: FastAPI
 # ) -> None:
@@ -27,20 +27,21 @@ async def test_user_creation(
 ) -> None:
     """Tests dummy instance creation."""
     url = api.url_path_for("UserRouter.new")
+    email = faker.email()
     response = await client.post(
         url,
         json={
-            "email": "admin@gmail.com",
-            "phone": "123456",
+            "email": email,
+            "phone": faker.phone_number(),
         },
     )
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     instances = await user_manager.by_id(data["id"])
-    assert instances.email == "admin@gmail.com"
+    assert instances.email == email
 
-    instances = await user_manager.by_email("admin@gmail.com")
-    assert instances.email == "admin@gmail.com"
+    instances = await user_manager.by_email(email)
+    assert instances.email == email
 
 
 @pytest.mark.anyio
@@ -53,8 +54,8 @@ async def test_get_users(
     for i in range(5):
         await user_manager.add_user(
             user=CreateUserRequest(
-                email=f"admin{i}@gmail.com",
-                phone=f"123456{i}",
+                email=faker.email(),
+                phone=faker.phone_number(),
             ),
         )
     url = api.url_path_for("UserRouter.get_users")
@@ -71,10 +72,11 @@ async def test_get_user(
     user_manager: UserManager,
 ) -> None:
     """Tests dummy instance creation."""
+    email = faker.email()
     user = await user_manager.add_user(
         user=CreateUserRequest(
-            email="admin@gmail.com",
-            phone="123456",
+            email=email,
+            phone=faker.phone_number(),
         ),
     )
     url = api.url_path_for("UserRouter.by_id")
@@ -91,10 +93,11 @@ async def test_remove_user(
     user_manager: UserManager,
 ) -> None:
     """Tests dummy instance creation."""
+    email = faker.email()
     user = await user_manager.add_user(
         user=CreateUserRequest(
-            email="admin@gmail.com",
-            phone="123456",
+            email=email,
+            phone=faker.phone_number(),
         ),
     )
 

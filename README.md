@@ -46,7 +46,39 @@ poetry run python -m service_platform_py
 ## Testing
 
 ```bash
-poetry run pytest -vv --cov="service_platform_py"
+poetry run pytest
 pytest -vv service_platform_py/tests/test_user.py::test_user_creation
 ```
 Or run the test directly in IDE (Pycharm/VSCode)
+### Run Test in IDE Pycharm (**Recommend**)
+![img.png](images/pycharm_config_test.png)
+### Notes:
+- Working directory should be in root path of application: `spartan-template-api-python/**`
+- Load `.envs/fastapi/.env.test` with options `Paths to '.env' files`
+-
+
+## Debug in Local
+### Run project in Pycharm
+- Best options for run FastAPI and Debug, should use root file of application `__main__.py`
+- Working directory should be in root path of application: `spartan-template-api-python/**`
+- Create config and click modify options
+    ![img.png](images/pycharm_modify_options.png)
+    - Choose option `Paths to '.env' files`
+- Load `.envs/fastapi/.env.local` with options `Paths to '.env' files`
+- Apply & Run
+
+## Pre-commit
+
+To install pre-commit simply run inside the shell:
+```bash
+pre-commit install
+```
+
+pre-commit is very useful to check your code before publishing it.
+It's configured using .pre-commit-config.yaml file.
+
+By default it runs:
+* ruff
+* pytest
+
+You can read more about pre-commit here: https://pre-commit.com/

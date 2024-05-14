@@ -10,7 +10,7 @@ from sqlalchemy.sql.base import ExecutableOption
 from starlette import status
 
 from service_platform_py.core.base_schema import CoreModel
-from service_platform_py.core.repository.error_code import KEY_EXISTS
+from service_platform_py.core.errors import KEY_EXISTS
 from service_platform_py.db.base_table import BaseTable
 from service_platform_py.service.postgres.dependency import get_db_session
 
