@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, Body
 from service_platform_py.api.router.user.manager import UserManager
 from service_platform_py.api.router.user.schema import (
     DeletedUserResponse,
+    UpdateUserRequest,
     UserResponse,
     CreateUserRequest,
     CreateUserResponse,
@@ -30,6 +31,14 @@ class UserRouter:
         payload: CreateUserRequest = Body(CreateUserRequest),
     ) -> CreateUserResponse:
         return await self.manager.add_user(payload)
+
+    @router.put("/update")
+    async def update_user(
+        self,
+        user_id: str,
+        payload: UpdateUserRequest = Body(UpdateUserRequest),
+    ) -> UserResponse:
+        return await self.manager.update_user_status(payload, user_id)
 
     @router.get("/")
     async def get_users(

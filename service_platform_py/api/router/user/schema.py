@@ -28,6 +28,10 @@ class CreateUserRequest(CoreModel):
     level: str = "user"
 
 
+class UpdateUserRequest(CoreModel):
+    status: str
+
+
 class CreateUserResponse(CoreModel):
     msg: str
     id: uuid.UUID

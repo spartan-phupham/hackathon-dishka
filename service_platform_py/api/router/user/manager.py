@@ -2,6 +2,7 @@ from fastapi import Depends
 
 from service_platform_py.api.router.user.schema import (
     DeletedUserResponse,
+    UpdateUserRequest,
     UserResponse,
     CreateUserRequest,
     CreateUserResponse,
@@ -24,6 +25,16 @@ class UserManager:
     async def add_user(self, user: CreateUserRequest) -> CreateUserResponse:
         user: UserEntity = await self.user_repository.create(user)
         return CreateUserResponse(msg="Create user successfully", id=user.id)
+
+    async def update_user_status(
+        self,
+        payload: UpdateUserRequest,
+        user_id,
+    ) -> UserResponse:
+        user = await self.user_repository.get(user_id)
+        return self.__to_user_response(
+            await self.user_repository.update(payload, user.id),
+        )
 
     async def by_email(self, email: str) -> UserResponse:
         user: UserEntity = await self.user_repository.find(

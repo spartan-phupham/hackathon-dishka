@@ -1,21 +1,21 @@
 # pylint: skip-file
 from typing import Any, Generic, List, Optional, Type, TypeVar
 
-from fastapi import HTTPException, Depends
+from fastapi import Depends, HTTPException
 from fastapi.encoders import jsonable_encoder
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.base import ExecutableOption
 from starlette import status
 
-from service_platform_py.core.base_schema import CoreModel
 from service_platform_py.core.errors import KEY_EXISTS
 from service_platform_py.db.base_table import BaseTable
 from service_platform_py.service.postgres.dependency import get_db_session
 
 EntityType = TypeVar("EntityType", bound=BaseTable)
-SchemaType = TypeVar("SchemaType", bound=CoreModel)
+SchemaType = TypeVar("SchemaType", bound=BaseModel)
 
 
 class BaseRepository(Generic[EntityType]):
@@ -74,12 +74,12 @@ class BaseRepository(Generic[EntityType]):
     async def update(self, obj_in: SchemaType | dict, obj_id: Any):
         try:
             obj: EntityType = await self.get(obj_id)
-            if type(obj_in) == SchemaType:
-                for key, value in obj_in.dict(exclude={self.entity.id}).items():
+            if isinstance(obj_in, dict):
+                for key, value in obj_in.items():
                     if hasattr(obj, key):
                         setattr(obj, key, value)
             else:
-                for key, value in obj_in.items():
+                for key, value in obj_in.model_dump(exclude={self.entity.id}).items():
                     if hasattr(obj, key):
                         setattr(obj, key, value)
             await self.save(obj)
