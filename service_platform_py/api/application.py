@@ -5,11 +5,13 @@ from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError, HTTPException
 from fastapi.responses import ORJSONResponse
 
+from service_platform_py.api.auth_backend.auth_backend import AuthBackend
 from service_platform_py.api.lifetime import (
     register_startup_event,
     register_shutdown_event,
 )
 from service_platform_py.api.router.router import api_router
+from service_platform_py.core.auth.authentication import AuthenticationMiddleware
 from service_platform_py.core.exception_handler import (
     request_validation_exception_handler,
     http_exception_handler,
@@ -63,7 +65,8 @@ def get_app() -> FastAPI:
         },
         lifespan=lifespan,
     )
-
+    if settings.enable_auth:
+        app.add_middleware(AuthenticationMiddleware, backend=AuthBackend())
     # Main router for the API.
     app.include_router(router=api_router, prefix="/api")
 

@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import Depends
 
 from service_platform_py.api.router.user.schema import (
@@ -17,7 +19,7 @@ class UserManager:
 
     async def by_id(
         self,
-        user_id: str,
+        user_id: UUID,
     ) -> UserResponse:
         user: UserEntity = await self.user_repository.get(user_id)
         return self.__to_user_response(user)
@@ -29,7 +31,7 @@ class UserManager:
     async def update_user_status(
         self,
         payload: UpdateUserRequest,
-        user_id,
+        user_id: UUID,
     ) -> UserResponse:
         user = await self.user_repository.get(user_id)
         return self.__to_user_response(
@@ -50,7 +52,7 @@ class UserManager:
         )
         return [self.__to_user_response(user) for user in users]
 
-    async def remove(self, user_id: str) -> DeletedUserResponse:
+    async def remove(self, user_id: UUID) -> DeletedUserResponse:
         user: UserEntity = await self.user_repository.remove(user_id)
         return DeletedUserResponse(msg="Deleted user successfully", id=user.id)
 

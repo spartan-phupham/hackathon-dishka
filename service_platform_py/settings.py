@@ -67,6 +67,7 @@ class Settings(BaseSettings):
 
     # db
     enable_db: bool = False
+    enable_auth: bool = False
     db_url: str = "localhost"
     db_name: str = "db_py"
     db_username: str = "local"
@@ -80,6 +81,9 @@ class Settings(BaseSettings):
     redis_user: Optional[str] = None
     redis_pass: Optional[str] = None
     redis_base: Optional[str] = None
+
+    # Timezone
+    timezone: str = "UTC"
 
     def __init__(self):
         env_file = load_environment_keys(ENVIRONMENT)

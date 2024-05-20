@@ -44,7 +44,7 @@ class AppResponse(ORJSONResponse):
         :param success: Boolean indicating the success status of the response.
         """
         if isinstance(content, AppResponseModel):
-            super().__init__(content.dict(exclude_none=True), status_code)
+            super().__init__(content.model_dump(exclude_none=True), status_code)
         else:
             content_resp = AppResponseModel()
             content_resp.success = success
@@ -56,4 +56,4 @@ class AppResponse(ORJSONResponse):
             else:
                 content_resp.result = content
                 content_resp.messages = ["Successfully"]
-            super().__init__(content_resp.dict(by_alias=True), status_code)
+            super().__init__(content_resp.model_dump(by_alias=True), status_code)

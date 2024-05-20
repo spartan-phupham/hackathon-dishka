@@ -126,7 +126,7 @@ class BaseRepository(Generic[EntityType]):
         try:
             objs = []
             for obj in obj_in:
-                obj_model = self.entity(**obj.dict())
+                obj_model = self.entity(**obj.model_dump())
                 objs.append(obj_model)
             self.database.add_all(objs)
             await self.save(objs)
@@ -135,7 +135,7 @@ class BaseRepository(Generic[EntityType]):
             await self.database.rollback()
             raise e
 
-    def raise_not_found(self, identify: str):
+    def raise_not_found(self, identify: Any):
         name_table = self.entity.__tablename__
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
