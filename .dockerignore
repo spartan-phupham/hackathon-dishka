@@ -1,0 +1,144 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*$py.class
+
+# C extensions
+# Distribution / packaging
+.Python
+.venv/
+venv/
+ENV/
+env.bak/
+venv.bak/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# IPython/Jupyter
+.profile_research/
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# celery beat schedule file
+celerybeat-schedule
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.envrc
+.env.local
+.env.dev
+.env.prod
+.env.test
+.env.stage
+
+# IDEs and editors
+.vscode/
+.idea/
+.project
+.pydevproject
+*.sublime-workspace
+*.sublime-project
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# Profiling data
+.prof
+
+# Docker-specific files
+Dockerfile
+Dockerfile.migration
+docker-compose.yml
+docker-compose.yaml
+
+# Ignore local .env files, but keep the template
+.env.*.local
+!.env.template
+
+# Temporary files
+*.swp
+*.swo
+*.tmp
+
+# Local config files
+config.local.yaml
+
+# Git
+.git
+.github
+.gitignore
+
+# Supported tools
+.editorconfig
+.pre-commit-config.yaml
+volume
+
+saved_folder
+pipeline_storage

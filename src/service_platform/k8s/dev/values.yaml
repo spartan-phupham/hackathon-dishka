@@ -1,0 +1,187 @@
+replicaCount: 2
+image:
+  repository: __DOCKER_REPO__
+  pullPolicy: IfNotPresent
+  tag: __IMAGE_TAG__
+
+containerPort: 8080
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: "__SERVICE_NAME__"
+containerName: "__SERVICE_NAME__"
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: "default"
+
+podAnnotations:
+  ad.datadoghq.com/__SERVICE_NAME__.check_names: '["__SERVICE_NAME__"]'
+  ad.datadoghq.com/__SERVICE_NAME__.init_configs: '[{}]'
+  ad.datadoghq.com/__SERVICE_NAME__.instances: |
+    [
+      {
+        "host": "%%host%%",
+        "port": "8080"
+      }
+    ]
+  ad.datadoghq.com/__SERVICE_NAME__.logs: |
+    [{
+      "type": "file",
+      "path": "/var/log/application/app.log",
+      "source": "eks-cluster",
+      "service": "__SERVICE_NAME__",
+      "env" : "__ENVIRONMENT__",
+      "auto_multi_line_detection": true
+    }]
+
+podSecurityContext: {}
+
+securityContext: {}
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  className: "alb"
+  annotations:
+    alb.ingress.kubernetes.io/group.name: "external"
+    kubernetes.io/ingress.class: "alb"
+    alb.ingress.kubernetes.io/target-type: "ip"
+    alb.ingress.kubernetes.io/healthcheck-path: "/api/health/"
+    alb.ingress.kubernetes.io/scheme:  "internet-facing"
+    alb.ingress.kubernetes.io/listen-ports: "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
+  hosts:
+  - host: "__SERVICE_NAME__.__BASE_DOMAIN__"
+    paths:
+    - path: /*
+      pathType: ImplementationSpecific
+
+livenessProbe:
+  httpGet:
+    path: /api/health/
+    port: 8080
+  initialDelaySeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 6
+readinessProbe:
+  httpGet:
+    path: /api/health/
+    port: 8080
+  initialDelaySeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 6
+
+resources:
+  limits:
+    cpu: 1950m
+    memory: 3.5Gi
+  requests:
+    cpu: 1950m
+    memory: 3.5Gi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+testConnection:
+  enabled: false
+
+secret:
+  externalSecretEnv:
+    enabled: true
+    name: __SERVICE_NAME__-env-var
+
+configMap:
+  externalConfigMapEnv:
+    enabled: true
+    name: __SERVICE_NAME__-config-map
+
+extraEnvs:
+  - name: ENVIRONMENT
+    value: __ENVIRONMENT__
+  - name: DD_CLUSTER_AGENT_URL
+    value: "https://datadog-cluster-agent.datadog:5005"
+  - name: DD_EKS_FARGATE
+    value: "true"
+  - name: DD_ENV
+    value: "__ENVIRONMENT__"
+  - name: DD_SERVICE
+    value: "__SERVICE_NAME__"
+  - name: DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL
+    value: "true"
+  - name: DD_LOGS_ENABLED
+    value: "true"
+  - name: DD_LOGS_INJECTION
+    value: "true"
+  - name: DD_PROCESS_AGENT_ENABLED
+    value: "true"
+  - name: DD_PROFILING_ENABLED
+    value: "true"
+  - name: DD_APM_FILTER_TAGS_REJECT
+    value: "http.route:/api/health/"
+
+sidecars:
+  - name: datadog-agent
+    image: "__DD_AGENT_IMAGE__"
+    ports:
+      - containerPort: 8125
+        name: dogstatsdport
+        protocol: UDP
+      - containerPort: 8126
+        name: traceport
+        protocol: TCP
+    sharedVolume:
+      mountPath: /var/log/application/
+    resources:
+      limits:
+        cpu: 50m
+        memory: 0.25Gi
+      requests:
+        cpu: 50m
+        memory: 0.25Gi
+
+hooks:
+  - name: "migration"
+    hookTypes: "pre-install,pre-upgrade"
+    hookWeight: 0
+    shell: /bin/bash
+    commands:
+      - /flyway/flyway migrate 2>&1 | tee -a /var/log/application/migration.log
+    customImage:
+      enabled: true
+      image: __DOCKER_REPO__:__IMAGE_TAG__-migration
+    restartPolicy: Never
+    podAnnotations:
+      ad.datadoghq.com/__SERVICE_NAME__.logs: |
+        [{
+          "type": "file",
+          "path": "/var/log/application/migration.log",
+          "source": "eks-cluster",
+          "service": "__SERVICE_NAME__-migration",
+          "env" : "__ENVIRONMENT__",
+          "auto_multi_line_detection": true
+        }]
+    resources:
+      limits:
+        cpu: 950m
+        memory: 1.5Gi
+      requests:
+        cpu: 950m
+        memory: 1.5Gi
+
+
+datadog:
+  enabled: true

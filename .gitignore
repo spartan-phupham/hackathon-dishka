@@ -154,6 +154,10 @@ flyway.user.toml
 # Pycharm
 .idea/*
 
-poetry.lock
-
 reports/
+
+# Local configurations
+config.local.yaml
+volume
+saved_folder
+pipeline_storage

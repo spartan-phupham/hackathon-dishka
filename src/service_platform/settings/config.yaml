@@ -1,0 +1,57 @@
+server:
+  address: 0.0.0.0
+  port: 8081
+  allowed_origin: "*"
+  reload: false
+  workers_count: 1
+  log_level: info
+  enable_datadog: false
+  max_upload_files: 10
+  logger:
+    level: info
+    log_file: ""
+    log_access: true
+
+postgres:
+  enabled: true
+  address: 0.0.0.0
+  db_name: service_platform
+  username: local
+  password: local
+  port: 5432
+
+redis:
+  enabled: false
+  address: 0.0.0.0
+  port: 30001
+  username: ""
+  password: ""
+  base: 0
+
+datadog:
+  enabled: false
+
+jwt:
+  secret_key_base64: ""
+  public_key_base64: ""
+  algorithm: "RS512"
+  expiration_time: 1440
+  refresh_expiration_time: -1
+
+aws:
+  region: "us-west-2"
+  s3_bucket: ""
+  sqs:
+    example:
+      url: ""
+      number_of_consumers: 0
+
+google:
+  client_id: ""
+  client_secret: ""
+  redirect_uri: "http://localhost:5173/google/callback"
+
+linkedin:
+  client_id: ""
+  client_secret: ""
+  redirect_uri: "http://localhost:5173/linkedin/callback"

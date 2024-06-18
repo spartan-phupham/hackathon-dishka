@@ -1,0 +1,166 @@
+name: DEV - Deploy
+
+on:
+  push:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+env:
+  AWS_EKS_CLUSTER_NAME: ${{ vars.AWS_EKS_CLUSTER_NAME_DEV }}
+  AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID_DEV }}
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  AWS_ROLE_TO_ASSUME: ${{ secrets.AWS_ROLE_TO_ASSUME_DEV }}
+  DOCKER_REPO: "${{ vars.AWS_ACCOUNT_ID_DEV }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ vars.SERVICE_NAME }}"
+  DD_AGENT_IMAGE: ${{ vars.DD_AGENT_IMAGE_DEV }}
+  ENVIRONMENT: dev
+  HELM_REPO: ${{ vars.HELM_REPO }}
+  HELM_VERSION: "1.0.9"
+  SERVICE_NAME: ${{ vars.SERVICE_NAME }}
+  BASE_DOMAIN: ${{ vars.BASE_DOMAIN_DEV }}
+  WORKING_DIRECTORY: "src/service_platform"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: "read"
+      id-token: write
+
+    steps:
+      - name: Create GitHub App Token
+        uses: actions/create-github-app-token@v1
+        id: github-app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.github-app-token.outputs.token }}
+          ref: ${{ github.head_ref }}
+          # Make sure the value of GITHUB_TOKEN will not be persisted in repo's config
+          persist-credentials: false
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_TO_ASSUME }}
+          role-session-name: gh-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Prepare docker image tags
+        run: |
+          SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-8)
+          CURRENT_DATE=$(date +%Y%m%d)
+          IMAGE_TAG="${{ env.ENVIRONMENT }}-$CURRENT_DATE-$SHORT_SHA"
+
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+
+      - name: Build and Push the Docker image
+        run: |
+          docker build -t "$DOCKER_REPO":"$IMAGE_TAG" -f $WORKING_DIRECTORY/Dockerfile .
+          docker push "$DOCKER_REPO":"$IMAGE_TAG"
+
+      - name: Build and Push the flyway Docker image
+        run: |
+          DOCKER_MIGRATION_IMAGE_TAG="$IMAGE_TAG"-migration
+          docker build -t "$DOCKER_REPO":"$DOCKER_MIGRATION_IMAGE_TAG" -f Dockerfile.migration $WORKING_DIRECTORY
+          docker push "$DOCKER_REPO":"$DOCKER_MIGRATION_IMAGE_TAG"
+
+      - name: "Update values for k8s files"
+        uses: cschleiden/replace-tokens@v1
+        with:
+          tokenPrefix: "__"
+          tokenSuffix: "__"
+          files: '["${{ env.WORKING_DIRECTORY }}/k8s/${{ env.ENVIRONMENT }}/**/*.yaml"]'
+        env:
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+
+      - name: Update Kubeconfig
+        run: |
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.AWS_EKS_CLUSTER_NAME }} --role-arn ${{ env.AWS_ROLE_TO_ASSUME }}
+
+      - name: "Helm Install"
+        run: |
+          helm repo add spartan https://x-access-token:${{ steps.github-app-token.outputs.token }}@raw.githubusercontent.com/daxe-ai/infra-helm/master/hosting
+          helm upgrade --install --wait --timeout 600s \
+            --namespace ${{ env.SERVICE_NAME }} \
+            -f $WORKING_DIRECTORY/k8s/${{ env.ENVIRONMENT }}/values.yaml \
+            --version ${{ env.HELM_VERSION }} \
+            ${{ env.SERVICE_NAME }} spartan/spartan
+
+      - name: "Extract Git info"
+        run: |
+          echo "GITHUB_AUTHOR=$(git log -1 --pretty=format:'%an <%ae>' | xargs)" >> $GITHUB_ENV
+          echo "GITHUB_REVISION=$(git rev-parse HEAD)" >> $GITHUB_ENV
+          echo "GITHUB_REPO=$(git config --get remote.origin.url)" >> $GITHUB_ENV
+
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          GITHUB_COMMITS=$(git --no-pager log --pretty=format:'%h (%an) %s' -n3 --no-color |  while read line || [ -n "$line" ]; do echo -n "- $line \\n"; done)
+          echo "GITHUB_COMMITS<<$EOF" >> "$GITHUB_ENV"
+          echo $GITHUB_COMMITS | sed "s/\"/'/g" >> "$GITHUB_ENV"
+          echo "$EOF" >> "$GITHUB_ENV"
+
+      - name: Slack Notification
+        id: slack
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": ":rocket: *${{ env.SERVICE_NAME }} - Deployed  to DEV*"
+                  }
+                },{
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Created by:* ${{ env.GITHUB_AUTHOR }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "```${{ env.GITHUB_COMMITS }}```"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View changes"
+                      },
+                      "style": "primary",
+                      "url": "${{ env.GITHUB_REPO }}/commit/${{ env.GITHUB_REVISION}}"
+                    },
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Run"
+                      },
+                      "style": "primary",
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+

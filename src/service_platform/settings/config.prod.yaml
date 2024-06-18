@@ -1,0 +1,8 @@
+server:
+  allowed_origin: ""
+  workers_count: 2
+  reload: false
+  logger:
+    level: info
+    log_file: app.log
+    log_access: true

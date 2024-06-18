@@ -1,0 +1,121 @@
+name: Testing service_platform
+
+on:
+  pull_request:
+    paths:
+      - 'src/**/*'
+      - 'pyproject.toml'
+      - 'poetry.lock'
+
+env:
+  SERVICE_NAME: "service_platform"
+  WORKING_DIRECTORY: "src/service_platform"
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    services:
+      postgresql:
+        image: postgis/postgis:14-3.3
+        env:
+          POSTGRES_PASSWORD: local
+          POSTGRES_USER: local
+          POSTGRES_DB: ${{ env.SERVICE_NAME }}
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        uses: knowsuchagency/poetry-install@v1
+        env:
+          POETRY_VIRTUALENVS_CREATE: false
+
+      - name: Install Flyway
+        run: |
+          sudo snap install flyway --classic
+          sudo ln -s /snap/bin/flyway /usr/local/bin/flyway
+
+      - name: Create Flyway Config
+        run: |
+          echo "flyway.sqlMigrationPrefix=V" > flyway.conf
+          echo "flyway.sqlMigrationSeparator=__" >> flyway.conf
+          echo "flyway.table=schema_version" >> flyway.conf
+          echo "flyway.cleanDisabled=false" >> flyway.conf
+          echo "flyway.mixed=true" >> flyway.conf
+          echo "flyway.url=jdbc:postgresql://localhost:5432/${{ env.SERVICE_NAME }}" >> flyway.conf
+          echo "flyway.user=local" >> flyway.conf
+          echo "flyway.password=local" >> flyway.conf
+          echo "flyway.locations=filesystem:./" >> flyway.conf
+        working-directory: ${{ env.WORKING_DIRECTORY }}/sql
+
+      - name: Apply Flyway Migrations
+        run: |
+          flyway -configFiles=flyway.conf clean migrate
+        working-directory: ${{ env.WORKING_DIRECTORY }}/sql
+
+      - name: Generate JWT Keys
+        run: |
+          openssl genpkey -algorithm RSA -out jwtRS512.key -pkeyopt rsa_keygen_bits:4096
+          openssl rsa -in jwtRS512.key -pubout -out jwtRS512.key.pub
+          PRIVATE_KEY=$(cat jwtRS512.key | base64 | tr -d '\n')
+          PUBLIC_KEY=$(cat jwtRS512.key.pub | base64 | tr -d '\n')
+          printf "PRIVATE_KEY=%s\n" "$PRIVATE_KEY" >> $GITHUB_ENV
+          printf "PUBLIC_KEY=%s\n" "$PUBLIC_KEY" >> $GITHUB_ENV
+          echo '
+          aws_credentials_dummy = {
+              "aws_access_key_id": "test",
+              "aws_secret_access_key": "test",
+          }' > service/aws/__init__.py
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+      - name: Start LocalStack
+        uses: LocalStack/setup-localstack@v0.2.0
+        with:
+          image-tag: 'latest'
+          install-awslocal: 'true'
+
+      - name: Configure LocalStack
+        run: |
+          awslocal s3 mb s3://service-platform-local --region us-west-2
+          awslocal sqs create-queue --queue-name example-worker-local-test --region us-west-2
+          echo '
+          {
+            "CORSRules": [
+              {
+                "AllowedOrigins": ["*"],
+                "AllowedMethods": ["GET", "PUT", "POST", "DELETE"],
+                "AllowedHeaders": ["*"]
+              }
+            ]
+          }' > cors-config.json
+          awslocal s3api put-bucket-cors --bucket service-platform-local --cors-configuration file://cors-config.json
+
+      - name: Run pytest
+        run: |
+          poetry run pytest -vv --cov="${{ env.SERVICE_NAME }}" .
+        env:
+          ADDRESS: "0.0.0.0"
+          SERVICE_FEATURE_FLAG_DB_HOST: localhost
+          ENABLE_DB: true
+          DB_URL: localhost
+          DB_NAME: ${{ env.SERVICE_NAME }}
+          DB_USERNAME: local
+          DB_PASSWORD: local
+          DB_PORT: 5432
+          ENABLE_REDIS: false
+          JWT__SECRET_KEY_BASE64: ${{ env.PRIVATE_KEY }}
+          JWT__PUBLIC_KEY_BASE64: ${{ env.PUBLIC_KEY }}
+          AWS__ENDPOINT_URL: http://localhost:4566
+          AWS__S3_BUCKET: service-platform-local
+          AWS__SQS__example_worker__URL: http://sqs.us-west-2.localhost:4566/000000000000/example-worker
