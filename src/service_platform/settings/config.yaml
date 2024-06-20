@@ -42,7 +42,7 @@ aws:
   region: "us-west-2"
   s3_bucket: ""
   sqs:
-    example:
+    example_worker:
       url: ""
       number_of_consumers: 0
 
