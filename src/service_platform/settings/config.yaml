@@ -42,9 +42,11 @@ aws:
   region: "us-west-2"
   s3_bucket: ""
   sqs:
-    example_worker:
-      url: ""
-      number_of_consumers: 0
+    localstack: false
+    workers:
+      example_worker:
+        url: ""
+        number_of_consumers: 0
 
 google:
   client_id: ""
@@ -55,3 +57,9 @@ linkedin:
   client_id: ""
   client_secret: ""
   redirect_uri: "http://localhost:5173/linkedin/callback"
+
+auth0:
+  client_id: ""
+  client_secret: ""
+  redirect_uri: http://localhost:5173/auth0/callback
+  base_url: https://<domain>.us.auth0.com

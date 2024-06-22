@@ -9,11 +9,17 @@ from service_platform.settings import logger, settings
 
 class SQSJobProducer:
     def __init__(self, queue_url):
+        if settings.aws.sqs.localstack is True:
+            endpoint_url = settings.aws.endpoint_url
+            aws_credentials = aws_credentials_dummy
+        else:
+            endpoint_url = None
+            aws_credentials = {}
         self.client = boto3.client(
             "sqs",
-            endpoint_url=settings.aws.endpoint_url,
+            endpoint_url=endpoint_url,
             region_name=settings.aws.region,
-            **aws_credentials_dummy,
+            **aws_credentials,
         )
         self.queue_url = queue_url
 

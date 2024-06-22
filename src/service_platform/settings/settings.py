@@ -15,6 +15,8 @@ from service_platform.settings import (
     JWTConfig,
     AWSConfig,
     LinkedinConfig,
+    ZoomConfig,
+    Auth0Config,
 )
 from service_platform.utils.file_utils import get_yaml_config
 
@@ -40,6 +42,8 @@ class Settings(YamlBaseSettings):
     redis: RedisConfig
     google: GoogleConfig
     linkedin: LinkedinConfig
+    zoom: ZoomConfig
+    auth0: Auth0Config
     aws: AWSConfig
     jwt: JWTConfig
 

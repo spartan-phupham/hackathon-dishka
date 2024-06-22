@@ -29,10 +29,10 @@ class GoogleApiClient(BaseClient):
 @response_handler(raise_for_status)  # Raise service_platform exception
 @response_handler(logging_error_response)  # Logging error when request to client
 class GoogleAccountClient(BaseClient):
-    base_url = settings.google.account_url
+    base_url = settings.google.oauth_url
 
     @returns.json(OauthExchangeCodeResponse)
-    @post("/o/oauth2/token")
+    @post("/token")
     async def token_info(
         self,
         code: Field,

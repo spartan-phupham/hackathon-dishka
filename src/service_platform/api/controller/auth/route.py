@@ -30,9 +30,7 @@ class AuthRouter:
     async def get_provider_redirect_url(
         self, provider: AuthProvider
     ) -> MessageResponse:
-        return await self.manager.get_provider_redirect_url(
-            provider=provider
-        )
+        return await self.manager.get_provider_redirect_url(provider=provider)
 
     @router.post("/login/{provider}")
     @public_endpoint

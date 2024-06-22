@@ -71,7 +71,7 @@ For development:
 
 ```bash
 export ENVIRONMENT=local
-cp config.yaml > config.local.yaml
+cp config.yaml config.local.yaml
 ```
 
 ## JWT
@@ -219,7 +219,6 @@ Create a new S3 bucket
 ```shell
 awslocal s3 mb s3://service-platform-local --region us-west-2
 awslocal sqs create-queue --queue-name example-worker-local --region us-west-2
-awslocal sqs create-queue --queue-name example-worker-local-test --region us-west-2
 ```
 
 Create cors-config.json

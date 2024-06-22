@@ -84,7 +84,7 @@ class JWTConfig(BaseModel):
 
 class GoogleConfig(BaseModel):
     api_url: str = "https://www.googleapis.com"
-    account_url: str = "https://accounts.google.com"
+    oauth_url: str = "https://oauth2.googleapis.com"
     client_id: str
     client_secret: str
     redirect_uri: str
@@ -97,13 +97,34 @@ class LinkedinConfig(BaseModel):
     client_secret: str
     redirect_uri: str
 
-class SQSDetailSetting(BaseModel):
+
+class ZoomConfig(BaseModel):
+    zoom_url: str = "https://zoom.us"
+    api_url: str = "https://api.zoom.us"
+    client_id: str
+    client_secret: str
+    redirect_uri: str
+
+
+class Auth0Config(BaseModel):
+    base_url: str
+    client_id: str
+    client_secret: str
+    redirect_uri: str
+
+
+class SQSWorkerDetailSetting(BaseModel):
     url: str
     number_of_consumers: int = 1
 
 
+class SQSWorkerSettings(BaseModel):
+    example_worker: SQSWorkerDetailSetting
+
+
 class SQSSettings(BaseModel):
-    example_worker: SQSDetailSetting
+    localstack: bool = False
+    workers: SQSWorkerSettings
 
 
 class AWSConfig(BaseModel):

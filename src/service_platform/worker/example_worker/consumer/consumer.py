@@ -11,7 +11,7 @@ class ExampleWorkerConsumer:
     ) -> None:
         processor = ExampleWorkerProcessor()
         self.sqs = SQSConsumer(
-            queue_url=settings.aws.sqs.example_worker.url, processors=[processor]
+            queue_url=settings.aws.sqs.workers.example_worker.url, processors=[processor]
         )
 
     async def start(self) -> None:

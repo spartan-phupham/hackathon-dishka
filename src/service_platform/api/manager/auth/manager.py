@@ -17,16 +17,20 @@ from service_platform.core.security.jwt_token_generator import JWTTokenGenerator
 from service_platform.db.refresh_token.repository import RefreshTokenRepository
 from service_platform.db.user.repository import UserRepository
 from service_platform.exception.auth_error import AuthError
-from service_platform.service.google.dependency import GoogleService
-from service_platform.service.linkedin.dependency import LinkedinService
+from service_platform.service.auth0.oauth import Auth0OAuthService
+from service_platform.service.google.oauth import GoogleOAuthService
+from service_platform.service.linkedin.oauth import LinkedinOAuthService
+from service_platform.service.zoom.oauth import ZoomOAuthService
 
 
 class AuthManager:
     def __init__(
         self,
         user_repository: UserRepository = Depends(),
-        google_auth: GoogleService = Depends(),
-        linkedin_auth: LinkedinService = Depends(),
+        google_auth: GoogleOAuthService = Depends(),
+        linkedin_auth: LinkedinOAuthService = Depends(),
+        zoom_auth: ZoomOAuthService = Depends(),
+        auth0_auth: Auth0OAuthService = Depends(),
         token_generator: JWTTokenGenerator = Depends(),
         auth_response_converter: AuthResponseConverter = Depends(),
         refresh_token_repository: RefreshTokenRepository = Depends(),
@@ -34,13 +38,13 @@ class AuthManager:
         self.user_repository = user_repository
         self.google_auth = google_auth
         self.linkedin_auth = linkedin_auth
+        self.zoom_auth = zoom_auth
+        self.auth0_auth = auth0_auth
         self.token_generator = token_generator
         self.auth_response_converter = auth_response_converter
         self.refresh_token_repository = refresh_token_repository
 
-    def _init_provider_config(
-        self, provider: AuthProvider
-    ) -> None:
+    def _init_provider_config(self, provider: AuthProvider) -> None:
         # Pass the init provider config if needed
         pass
 

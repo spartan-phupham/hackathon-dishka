@@ -1,5 +1,5 @@
 from service_platform.settings import logger
-from service_platform.worker.example_worker.__main__ import ExampleWorker
+from service_platform.worker.example_worker import ExampleWorker
 
 
 async def register_startup_event() -> None:

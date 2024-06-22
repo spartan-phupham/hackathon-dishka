@@ -15,6 +15,6 @@ class ExampleWorker:
     async def start(self):
         consumers = [
             self.consumer
-            for _ in range(settings.aws.sqs.example_worker.number_of_consumers)
+            for _ in range(settings.aws.sqs.workers.example_worker.number_of_consumers)
         ]
         await asyncio.gather(*[consumer.start() for consumer in consumers])

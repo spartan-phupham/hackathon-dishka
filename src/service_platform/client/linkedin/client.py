@@ -38,13 +38,12 @@ class LinkedinOauthClient(BaseClient):
 class LinkedinApiClient(BaseClient):
     def __init__(self, access_token: str, **kwargs):
         self.base_url = settings.linkedin.api_url
-        self.access_token = access_token
         super().__init__(**kwargs)
 
     @returns.json(OauthProviderUserResponse)
-    async def user_info(self) -> OauthProviderUserResponse:
+    async def user_info(self, access_token: str) -> OauthProviderUserResponse:
         """Retrieves LinkedIn user info by access_token"""
-        bearer_headers = {"Authorization": f"Bearer {self.access_token}"}
+        bearer_headers = {"Authorization": f"Bearer {access_token}"}
         url = f"{self.base_url}/v2/userinfo"
         response = requests.get(url, headers=bearer_headers)
         return OauthProviderUserResponse(**response.json())
