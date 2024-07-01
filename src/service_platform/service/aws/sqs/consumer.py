@@ -86,15 +86,9 @@ class SQSConsumer:
                 await self.change_visibility(message)
 
     async def process(self, message):
-        try:
-            for processor in self.processors:
-                await processor.handle(json.loads(message["Body"]))
-            return len(self.processors) > 0
-        except Exception as e:
-            logger.warning(
-                f"SQS Failed to process message={message['Body']} due to={e}"
-            )
-            return False
+        for processor in self.processors:
+            await processor.handle(json.loads(message["Body"]))
+        return len(self.processors) > 0
 
     async def delete(self, message):
         request = {
