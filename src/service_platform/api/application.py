@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 from yarl import URL
 
@@ -81,20 +81,6 @@ def get_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.server.allowed_origin.split(","),
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=[
-            "Origin",
-            "Content-Type",
-            "Accept",
-            "Authorization",
-            "Cookie",
-        ],
-    )
-
     # Main router for the API.
     app.include_router(router=api_router, prefix="/api")
 
@@ -108,6 +94,20 @@ def get_app() -> FastAPI:
         AuthenticationMiddleware,
         public_paths=public_paths,
         refresh_token_paths=refresh_token_paths,
+    )
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.server.allowed_origin.split(","),
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=[
+            "Origin",
+            "Content-Type",
+            "Accept",
+            "Authorization",
+            "Cookie",
+        ],
     )
 
     return app
