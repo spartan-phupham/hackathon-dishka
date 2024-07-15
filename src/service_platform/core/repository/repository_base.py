@@ -1,9 +1,11 @@
 # pylint: skip-file
+from datetime import datetime
+from enum import Enum
 from typing import Any, Generic, List, Optional, Type, TypeVar
 
 from fastapi import HTTPException, Depends
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import func, select, null
+from sqlalchemy import func, select, null, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
@@ -27,9 +29,26 @@ class BaseRepository(Generic[EntityType]):
     ):
         self.database = database
 
+    async def save(self, obj):
+        await self.database.commit()
+        await self.database.flush(obj)
+        await self.database.refresh(obj)
+        return obj
+
     async def create(self, obj_in: SchemaType | dict) -> EntityType:
         try:
             obj_in_data = jsonable_encoder(obj_in)
+
+            for key, value in obj_in_data.items():
+                if (
+                    isinstance(value, str)
+                    and key in obj_in.__annotations__
+                    and (
+                        obj_in.__annotations__[key] == datetime
+                        or obj_in.__annotations__[key] == datetime | None
+                    )
+                ):
+                    obj_in_data[key] = datetime.fromisoformat(value)
             obj = self.entity(**obj_in_data)
             self.database.add(obj)
             await self.save(obj)
@@ -45,18 +64,13 @@ class BaseRepository(Generic[EntityType]):
             self.raise_not_found(obj_id)
         return obj_db
 
-    async def remove(self, obj_id: Any) -> EntityType:
-        obj = await self.database.get(self.entity, obj_id)
-        if not obj:
-            self.raise_not_found(obj_id)
+    async def remove(self, obj_id: Any) -> None:
         await self.update(
             obj_in={
                 "deleted_at": func.now(),
             },
-            obj_id=obj.id,
+            obj_id=obj_id,
         )
-        await self.save(obj)
-        return obj
 
     async def bulk_remove(self, objs: List[EntityType]) -> None:
         for obj in objs:
@@ -66,29 +80,39 @@ class BaseRepository(Generic[EntityType]):
                 },
                 obj_id=obj.id,
             )
-            await self.save(obj)
 
-    async def update(self, obj_in: SchemaType | dict, obj_id: Any):
+    async def update(
+        self, obj_in: SchemaType | dict, obj_id: Any, allow_nulls: List[str] = None
+    ):
         try:
-            obj: EntityType = await self.get(obj_id)
+            if allow_nulls is None:
+                allow_nulls = set()
+
+            update_values = {}
             if isinstance(obj_in, dict):
                 for key, value in obj_in.items():
-                    if value is not None and hasattr(obj, key):
-                        setattr(obj, key, value)
+                    if value is not None or key in allow_nulls:
+                        update_values[key] = value
             else:
-                for key, value in obj_in.model_dump(exclude={self.entity.id}).items():
-                    if value is not None and hasattr(obj, key):
-                        setattr(obj, key, value)
-            await self.save(obj)
-            return obj
+                exclude_key = str(self.entity.id)
+                for key, value in obj_in.model_dump(exclude={exclude_key}).items():
+                    if value is not None or key in allow_nulls:
+                        if isinstance(value, Enum):
+                            value = value.value
+                        update_values[key] = value
+
+            await self.database.execute(
+                (
+                    update(self.entity)
+                    .where(self.entity.id == obj_id)
+                    .values(**update_values)
+                    .execution_options(synchronize_session="fetch")
+                )
+            )
+            await self.database.commit()
         except IntegrityError as e:
             await self.database.rollback()
             self.raise_not_found(str(e))
-
-    async def save(self, obj):
-        await self.database.commit()
-        await self.database.flush(obj)
-        return obj
 
     def _build_filter_query(
         self,
