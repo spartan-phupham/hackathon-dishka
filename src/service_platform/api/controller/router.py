@@ -4,6 +4,8 @@ from service_platform.api.controller.auth import auth_router
 from service_platform.api.controller.health import health_router
 from service_platform.api.controller.user import user_router
 from service_platform.api.controller.nguyen import nguyen_router
+from dishka.integrations.fastapi import DishkaRoute
+
 
 api_router = APIRouter()
 

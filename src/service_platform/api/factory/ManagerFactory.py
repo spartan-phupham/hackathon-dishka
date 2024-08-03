@@ -8,7 +8,7 @@ class ManagerFactory(Provider):
         super().__init__()
         pass
 
-    @provide(scope=Scope.APP)
+    @provide(scope=Scope.RUNTIME)
     def provide_health_manager(self) -> HealthManager:
         print("This provider is called, should be called 1 time. Will be called multiple times if Scope.REQUEST")
         return HealthManager()
