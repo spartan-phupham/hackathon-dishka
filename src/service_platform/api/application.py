@@ -8,6 +8,7 @@ from fastapi.responses import ORJSONResponse
 from yarl import URL
 
 from service_platform.api.controller.router import api_router
+from service_platform.api.factory.ManagerFactory import ManagerFactory
 from service_platform.api.lifetime import (
     register_startup_event,
     register_shutdown_event,
@@ -30,6 +31,8 @@ from service_platform.service.postgres.lifetime import (
 from service_platform.service.redis.lifetime import init_redis, shutdown_redis
 from service_platform.settings import settings
 
+from dishka import make_async_container
+from dishka.integrations.fastapi import setup_dishka
 
 def get_app() -> FastAPI:
     """
@@ -110,4 +113,10 @@ def get_app() -> FastAPI:
         ],
     )
 
+    return app
+
+def get_updated_app():
+    app = get_app()
+    container = make_async_container(ManagerFactory())
+    setup_dishka(container, app)
     return app

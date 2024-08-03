@@ -10,7 +10,7 @@ nest_asyncio.apply()
 def main() -> None:
     log_config = config_logging()
     uvicorn.run(
-        f"service_platform.api.application:get_app",
+        f"service_platform.api.application:get_updated_app",
         workers=settings.server.workers_count,
         host=settings.server.address,
         port=settings.server.port,
