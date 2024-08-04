@@ -8,6 +8,8 @@ from fastapi.responses import ORJSONResponse
 from yarl import URL
 
 from service_platform.api.controller.router import api_router
+from service_platform.api.factory.CoreFactory import CoreFactory
+from service_platform.api.factory.DatabaseFactory import DatabaseFactory
 from service_platform.api.factory.ManagerFactory import ManagerFactory
 from service_platform.api.lifetime import (
     register_startup_event,
@@ -117,6 +119,10 @@ def get_app() -> FastAPI:
 
 def get_updated_app():
     app = get_app()
-    container = make_async_container(ManagerFactory())
+    container = make_async_container(
+        ManagerFactory(), 
+        DatabaseFactory(), 
+        CoreFactory()
+    )
     setup_dishka(container, app)
     return app

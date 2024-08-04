@@ -1,7 +1,5 @@
 import uuid
 
-from fastapi import Depends
-
 from service_platform.api.manager.user.response import UserResponseConverter
 from service_platform.client.response.user.user_response import UserResponse
 from service_platform.db.user.repository import UserRepository
@@ -10,8 +8,8 @@ from service_platform.db.user.repository import UserRepository
 class UserManager:
     def __init__(
         self,
-        user_repository: UserRepository = Depends(),
-        user_response_converter: UserResponseConverter = Depends(),
+        user_repository: UserRepository,
+        user_response_converter: UserResponseConverter,
     ):
         self.user_repository = user_repository
         self.user_response_converter = user_response_converter

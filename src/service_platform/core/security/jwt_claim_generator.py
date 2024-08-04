@@ -1,14 +1,12 @@
 from datetime import timedelta, datetime, UTC
 
-from fastapi import Depends
-
 from service_platform.core.middleware.model import TokenType
 from service_platform.core.security.jwt_registered_claim import JWTRegisteredClaim
 from service_platform.core.security.token_generator import ClaimGenerator
 
 
 class JWTClaimGenerator(ClaimGenerator):
-    def __init__(self, registered_claim: JWTRegisteredClaim = Depends()):
+    def __init__(self, registered_claim: JWTRegisteredClaim):
         self.registered_claim = registered_claim
 
     def generate_claims(

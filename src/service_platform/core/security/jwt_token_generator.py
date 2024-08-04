@@ -1,7 +1,6 @@
 import base64
 
 import jwt
-from fastapi import Depends
 
 from service_platform.core.middleware.model import TokenType
 from service_platform.core.security.custom_authentication import CustomAuthentication
@@ -12,7 +11,7 @@ from service_platform.settings import settings
 
 
 class JWTTokenGenerator(TokenGenerator):
-    def __init__(self, claim_generator: JWTClaimGenerator = Depends()):
+    def __init__(self, claim_generator: JWTClaimGenerator):
         self.claim_generator = claim_generator
         self.secret_key = base64.b64decode(settings.jwt.secret_key_base64)
         self.algorithm = settings.jwt.algorithm

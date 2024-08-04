@@ -7,11 +7,9 @@ from service_platform.core.middleware.authentication import public_endpoint
 router = APIRouter()
 
 
-@class_router(router)
-class HealthRouter:
-    @staticmethod
-    @router.get("/")
-    @public_endpoint
-    async def health() -> MessageResponse:
-        response = MessageResponse(message="OK")
-        return response
+@staticmethod
+@router.get("/")
+@public_endpoint
+async def health() -> MessageResponse:
+    response = MessageResponse(message="OK")
+    return response

@@ -1,8 +1,6 @@
 import uuid
 from typing import Any
 
-from fastapi import Depends
-
 from service_platform.api.controller.schema import MessageResponse
 from service_platform.api.manager.auth.response import AuthResponseConverter
 from service_platform.client.model.auth_provider import AuthProvider
@@ -26,14 +24,14 @@ from service_platform.service.zoom.oauth import ZoomOAuthService
 class AuthManager:
     def __init__(
         self,
-        user_repository: UserRepository = Depends(),
-        google_auth: GoogleOAuthService = Depends(),
-        linkedin_auth: LinkedinOAuthService = Depends(),
-        zoom_auth: ZoomOAuthService = Depends(),
-        auth0_auth: Auth0OAuthService = Depends(),
-        token_generator: JWTTokenGenerator = Depends(),
-        auth_response_converter: AuthResponseConverter = Depends(),
-        refresh_token_repository: RefreshTokenRepository = Depends(),
+        user_repository: UserRepository,
+        refresh_token_repository: RefreshTokenRepository,
+        google_auth: GoogleOAuthService,
+        linkedin_auth: LinkedinOAuthService,
+        zoom_auth: ZoomOAuthService,
+        auth0_auth: Auth0OAuthService,
+        token_generator: JWTTokenGenerator,
+        auth_response_converter: AuthResponseConverter,
     ):
         self.user_repository = user_repository
         self.google_auth = google_auth

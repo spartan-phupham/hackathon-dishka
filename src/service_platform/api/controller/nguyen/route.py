@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from dishka.integrations.fastapi import FromDishka, inject
 
 from service_platform.api.manager.health.manager import HealthManager

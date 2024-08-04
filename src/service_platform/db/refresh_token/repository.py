@@ -1,7 +1,6 @@
 import uuid
 from typing import Optional
 
-from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from service_platform.core.repository.repository_base import BaseRepository
@@ -12,7 +11,7 @@ from service_platform.service.postgres.dependency import get_db_session
 class RefreshTokenRepository(BaseRepository[RefreshTokenEntity]):
     entity = RefreshTokenEntity
 
-    def __init__(self, database: AsyncSession = Depends(get_db_session)):
+    def __init__(self, database: AsyncSession):
         super().__init__(database)
         self.database = database
 

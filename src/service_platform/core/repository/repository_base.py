@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Generic, List, Optional, Type, TypeVar
 
-from fastapi import HTTPException, Depends
+from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import func, select, null, update
 from sqlalchemy.exc import IntegrityError
@@ -25,7 +25,7 @@ class BaseRepository(Generic[EntityType]):
 
     def __init__(
         self,
-        database: AsyncSession = Depends(get_db_session),
+        database: AsyncSession,
     ):
         self.database = database
 
