@@ -2,15 +2,14 @@ from httpx import AsyncClient
 
 from service_platform.tests.client.base import BaseClient
 
-class UserClient(BaseClient):
+class HealthClient(BaseClient):
     def __init__(self, client: AsyncClient):
         super().__init__()
         self.client = client
 
 
-    async def me(self, token: str):
-        url = "/api/user/me"
+    async def health(self):
+        url = "/api/health/"
         return await self.modify_authoriztion_header(
-            client=self.client, 
-            token=token
+            client=self.client
         ).get(url)

@@ -77,4 +77,4 @@ class CoreFactory(Provider):
         await session.commit()
         await session.close()
 
-        print("Successfully cloes DB session")
+        print("Successfully close DB session")

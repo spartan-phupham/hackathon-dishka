@@ -1,6 +1,7 @@
 from typing import Annotated
 import uuid
 from dishka import FromComponent
+from faker import Faker
 from fastapi import APIRouter
 from dishka.integrations.fastapi import FromDishka, inject
 from redis import ConnectionPool

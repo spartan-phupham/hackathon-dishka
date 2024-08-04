@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 from faker import Faker
 from fastapi import FastAPI, UploadFile
 from httpx import ASGITransport, AsyncClient
+from asyncio import current_task
 from sqlalchemy.ext.asyncio import (
     AsyncConnection,
     AsyncTransaction,
@@ -12,7 +13,9 @@ from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
+    async_scoped_session
 )
+from sqlalchemy.sql import text
 
 from service_platform.api.application import get_app, get_updated_app
 from service_platform.api.manager.user.manager import UserManager
@@ -30,7 +33,8 @@ from service_platform.service.aws.sqs import SQSConsumer, SQSJobProducer
 from service_platform.service.postgres.dependency import get_db_session
 from service_platform.settings import settings
 from service_platform.worker.example_worker.processor import ExampleWorkerProcessor
-from dishka.integrations.fastapi import setup_dishka
+from sqlalchemy import MetaData
+
 
 fake = Faker()
 
@@ -39,85 +43,86 @@ DEFAULT_USER_EMAIL = fake.email()
 DEFAULT_USER_ID = fake.uuid4()
 DEFAULT_USER_PICTURE = fake.image_url()
 
-class BaseTestClass(unittest.IsolatedAsyncioTestCase):
+class BaseTest(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
-        self.engine = await self._engine()
-        await self.dbConnection(self.engine)
-        # self.trans = await self.dbTransaction(self.connection)
-        # self.session = await self.dbSession(self.connection)
+        await self.dbConnection()
         self.api = self.api(self.session)
-        self.client = await self.client(self.api)
-        
-    async def _engine(self) -> AsyncEngine:
-        """
-        Create engine and databases.
 
-        :yield: new engine.
-        """
-        return create_async_engine(str(settings.postgres_url))
+        self.claim_generator = JWTClaimGenerator(
+            registered_claim=JWTRegisteredClaim(),
+        )
+        self.token_generator = self.token_generator(self.claim_generator)
+
+        self.user_repository = UserRepository(self.session)
+    
+    async def asyncTearDown(self):
+        await self.truncate_all_table()
+        await self.session.close()
+        await self.engine.dispose()
 
     async def dbConnection(
-        self,
-        _engine: AsyncEngine,
+        self
     ) -> None:
-        self.connection = await _engine.connect()
-        self.trans = await self.connection.begin()
-
-        session_maker = async_sessionmaker(
-            self.connection,
-            class_=AsyncSession,
-            expire_on_commit=False,
-        )
-        self.session = session_maker()
-    
-    async def dbTransaction(
-        self,
-        connection: AsyncConnection,
-    ) -> AsyncTransaction:
-        return connection.begin()
-    
-    async def dbSession(
-        self,
-        connection: AsyncConnection,
-    ) -> AsyncSession:
-        session_maker = async_sessionmaker(
-            connection,
-            class_=AsyncSession,
-            expire_on_commit=False,
-        )
-        return session_maker()
+        self.engine = create_async_engine(str(settings.postgres_url))
+        self.session = async_scoped_session(
+            async_sessionmaker(
+                self.engine,
+                class_=AsyncSession,
+                expire_on_commit=False,
+            ),
+            scopefunc=current_task,
+        )()
     
     def api(
         self,
         dbsession: AsyncSession,
     ) -> FastAPI:
-        """
-        Fixture for creating FastAPI app.
-
-        :return: fastapi app with mocked dependencies.
-        """
         application = get_updated_app()
         application.dependency_overrides[get_db_session] = lambda: dbsession
-        return application  # noqa: WPS331
+        return application
     
     async def client(
         self,
         api: FastAPI
     ) -> AsyncClient:
-        """
-        Fixture that creates client for requesting server.
-
-        :param fastapi_app: the application.
-        :yield: client for the app.
-        """
         return  AsyncClient(transport=ASGITransport(app=api), base_url="http://test")
     
+    def token_generator(
+        self,
+        claim_generator: JWTClaimGenerator,
+    ) -> JWTTokenGenerator:
+        return JWTTokenGenerator(
+            claim_generator=claim_generator,
+        )
+    
+    async def access_token(
+        self,
+        test_user: UserEntity
+    ) -> str:
+        """
+        Fixture to create an access token for the test user.
+        """
+        authentication = CustomAuthentication(
+            user_id=str(test_user.id),
+            roles=[test_user.roles],
+        )
+        jwt_token = self.token_generator.generate_token(authentication)
+        return jwt_token.access_token
+    
+    async def create_user(
+        self,
+        user_repository: UserRepository,
+    ) -> UserEntity:
+        return await user_repository.insert_user(
+            auth_id=DEFAULT_USER_ID,
+            email=DEFAULT_USER_EMAIL,
+            name=DEFAULT_USER_NAME,
+            picture_url=DEFAULT_USER_ID,
+            auth_provider=AuthProvider.GOOGLE,
+        )
+    
     # async def setUp(self) -> None:
-    #     self.api = get_app()
-    #     self.api.dependency_overrides[get_db_session] = lambda: self.session
 
-    #     self.client = AsyncClient(app=self.api, base_url="http://test")
-    #     self.user_repository = UserRepository(self.session)
     #     self.refresh_token_repository = RefreshTokenRepository(self.session)
     #     self.example_worker_repository = ExampleWorkerRepository()
     #     self.example_worker_repository.database = self.session
@@ -143,10 +148,20 @@ class BaseTestClass(unittest.IsolatedAsyncioTestCase):
     #         CustomAuthentication(user_id=str(self.test_user.id), roles=[self.test_user.roles], jti=str(self.refresh_token.id))
     #     ).refresh_token
 
+    async def truncate_all_table(self):
+        excluded_tables = {
+            "geography_columns",
+            "geometry_columns",
+            "spatial_ref_sys",
+            "schema_version"
+        }
 
-    async def asyncTearDown(self):
-        await self.session.close()
-        await self.trans.rollback()
-        await self.connection.close()
-        await self.engine.dispose()
-        await self.client.aclose()
+        async with self.session as session:
+            result = await session.execute(text(
+                "SELECT table_name FROM information_schema.tables WHERE table_schema='public'"
+            ))
+            tables = [row[0] for row in result.fetchall() if row[0] not in excluded_tables]
+                
+            for table in tables:
+                await session.execute(text(f"TRUNCATE {table}"))      
+            await session.commit()
