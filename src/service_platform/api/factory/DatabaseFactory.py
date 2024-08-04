@@ -13,14 +13,14 @@ class DatabaseFactory(Provider):
     def __init__(self) -> None:
         super().__init__()
 
-    @provide(scope=Scope.APP)
+    @provide(scope=Scope.REQUEST)
     def provide_user_repository(
         self,
         database: Annotated[AsyncSession, FromComponent("Core")]
     ) -> UserRepository:
         return UserRepository(database=database)
 
-    @provide(scope=Scope.APP)
+    @provide(scope=Scope.REQUEST)
     def provide_refresh_token_reopsitory(
         self,
         database: Annotated[AsyncSession, FromComponent("Core")]

@@ -59,7 +59,7 @@ class CoreFactory(Provider):
         return UserResponseConverter()
     
     
-    @provide(scope=Scope.APP)
+    @provide(scope=Scope.REQUEST)
     async def provide_db_session_factory(self) -> AsyncGenerator[AsyncSession, None]:
         engine = create_async_engine(str(settings.postgres_url))
         session = async_scoped_session(
@@ -76,3 +76,5 @@ class CoreFactory(Provider):
 
         await session.commit()
         await session.close()
+
+        print("Successfully cloes DB session")

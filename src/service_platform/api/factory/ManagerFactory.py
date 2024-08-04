@@ -23,7 +23,7 @@ class ManagerFactory(Provider):
         print("This provider is called, should be called 1 time. Will be called multiple times if Scope.REQUEST")
         return HealthManager()
     
-    @provide(scope=Scope.APP)
+    @provide(scope=Scope.REQUEST)
     def provide_auth_manager(
         self,
         user_repository: Annotated[UserRepository, FromComponent("Database")],
@@ -47,7 +47,7 @@ class ManagerFactory(Provider):
             auth_response_converter=auth_response_converter
         )
     
-    @provide(scope=Scope.APP)
+    @provide(scope=Scope.REQUEST)
     def provide_user_manager(
         self,
         user_repository: Annotated[UserRepository, FromComponent("Database")],
