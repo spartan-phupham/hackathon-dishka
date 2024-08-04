@@ -1,4 +1,6 @@
-from typing import Annotated
+from typing import Annotated, Iterable
+
+from redis import ConnectionPool
 from service_platform.api.manager.auth.manager import AuthManager
 from service_platform.api.manager.auth.response import AuthResponseConverter
 from service_platform.api.manager.health.manager import HealthManager
@@ -13,6 +15,7 @@ from service_platform.service.auth0.oauth.oauth import Auth0OAuthService
 from service_platform.service.google.oauth.oauth import GoogleOAuthService
 from service_platform.service.linkedin.oauth.oauth import LinkedinOAuthService
 from service_platform.service.zoom.oauth.oauth import ZoomOAuthService
+from service_platform.settings import settings
 class ManagerFactory(Provider):
     def __init__(self) -> None:
         super().__init__()
@@ -57,6 +60,3 @@ class ManagerFactory(Provider):
             user_repository=user_repository,
             user_response_converter=user_response_converter
         )
-
-
-

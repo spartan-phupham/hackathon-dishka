@@ -11,6 +11,7 @@ from service_platform.api.controller.router import api_router
 from service_platform.api.factory.CoreFactory import CoreFactory
 from service_platform.api.factory.DatabaseFactory import DatabaseFactory
 from service_platform.api.factory.ManagerFactory import ManagerFactory
+from service_platform.api.factory.RedisFactory import RedisFactory
 from service_platform.api.lifetime import (
     register_startup_event,
     register_shutdown_event,
@@ -122,7 +123,8 @@ def get_updated_app():
     container = make_async_container(
         ManagerFactory(), 
         DatabaseFactory(), 
-        CoreFactory()
+        CoreFactory(),
+        RedisFactory()
     )
     setup_dishka(container, app)
     return app
