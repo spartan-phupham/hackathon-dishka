@@ -1,15 +1,11 @@
-from typing import Any, AsyncGenerator
+from typing import Any
 import unittest
-from unittest.mock import Mock, patch
 
 from faker import Faker
-from fastapi import FastAPI, UploadFile
+from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from asyncio import current_task
 from sqlalchemy.ext.asyncio import (
-    AsyncConnection,
-    AsyncTransaction,
-    AsyncEngine,
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
@@ -17,8 +13,7 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.sql import text
 
-from service_platform.api.application import get_app, get_updated_app
-from service_platform.api.manager.user.manager import UserManager
+from service_platform.api.application import get_updated_app
 from service_platform.client.model.auth_provider import AuthProvider
 from service_platform.client.request.auth.auth_request import RefreshTokenRequest
 from service_platform.core.security.custom_authentication import CustomAuthentication
@@ -28,22 +23,12 @@ from service_platform.core.security.jwt_token_generator import JWTTokenGenerator
 from service_platform.db.refresh_token.repository import RefreshTokenRepository
 from service_platform.db.user.repository import UserRepository
 from service_platform.db.user.table import UserEntity
-from service_platform.service.aws.s3 import S3
-from service_platform.service.aws.sqs import SQSConsumer, SQSJobProducer
 from service_platform.service.postgres.dependency import get_db_session
 from service_platform.settings import settings
-from service_platform.worker.example_worker.processor import ExampleWorkerProcessor
-from sqlalchemy import MetaData
-
 
 fake = Faker()
 
-DEFAULT_USER_NAME = fake.user_name()
-DEFAULT_USER_EMAIL = fake.email()
-DEFAULT_USER_ID = fake.uuid4()
-DEFAULT_USER_PICTURE = fake.image_url()
-
-class BaseTest(unittest.IsolatedAsyncioTestCase):
+class TestBase(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         await self.dbConnection()
         self.api = self.api(self.session)
@@ -54,6 +39,7 @@ class BaseTest(unittest.IsolatedAsyncioTestCase):
         self.token_generator = self.token_generator(self.claim_generator)
 
         self.user_repository = UserRepository(self.session)
+        self.refresh_token_repository = RefreshTokenRepository(self.session)
     
     async def asyncTearDown(self):
         await self.truncate_all_table()
@@ -114,39 +100,26 @@ class BaseTest(unittest.IsolatedAsyncioTestCase):
         user_repository: UserRepository,
     ) -> UserEntity:
         return await user_repository.insert_user(
-            auth_id=DEFAULT_USER_ID,
-            email=DEFAULT_USER_EMAIL,
-            name=DEFAULT_USER_NAME,
-            picture_url=DEFAULT_USER_ID,
+            auth_id=fake.uuid4(),
+            email=fake.email(),
+            name=fake.user_name(),
+            picture_url=fake.image_url(),
             auth_provider=AuthProvider.GOOGLE,
         )
     
-    # async def setUp(self) -> None:
-
-    #     self.refresh_token_repository = RefreshTokenRepository(self.session)
-    #     self.example_worker_repository = ExampleWorkerRepository()
-    #     self.example_worker_repository.database = self.session
-    #     self.user_manager = UserManager(self.user_repository)
-
-    #     # Prepare data for tests
-    #     self.test_user = await self.user_repository.insert_user(
-    #         auth_id=DEFAULT_USER_ID,
-    #         email=DEFAULT_USER_EMAIL,
-    #         name=DEFAULT_USER_NAME,
-    #         picture_url=DEFAULT_USER_PICTURE,
-    #         auth_provider=AuthProvider.GOOGLE,
-    #     )
-    #     self.claim_generator = JWTClaimGenerator(registered_claim=JWTRegisteredClaim())
-    #     self.token_generator = JWTTokenGenerator(claim_generator=self.claim_generator)
-    #     self.access_token = self.token_generator.generate_token(
-    #         CustomAuthentication(user_id=str(self.test_user.id), roles=[self.test_user.roles])
-    #     ).access_token
-    #     self.refresh_token = await self.refresh_token_repository.create(
-    #         RefreshTokenRequest(user_id=self.test_user.id)
-    #     )
-    #     self.refresh_token = self.token_generator.generate_token(
-    #         CustomAuthentication(user_id=str(self.test_user.id), roles=[self.test_user.roles], jti=str(self.refresh_token.id))
-    #     ).refresh_token
+    async def refresh_token(
+        self,
+        token_generator: JWTTokenGenerator,
+        test_user: UserEntity
+    ) -> str:
+        refresh_token = await self.refresh_token_repository.create(
+            RefreshTokenRequest(user_id=test_user.id)
+        )
+        authentication = CustomAuthentication(
+            user_id=str(test_user.id), roles=[test_user.roles], jti=str(refresh_token.id)
+        )
+        jwt_token = token_generator.generate_token(authentication)
+        return jwt_token.refresh_token
 
     async def truncate_all_table(self):
         excluded_tables = {

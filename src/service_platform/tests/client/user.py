@@ -4,9 +4,7 @@ from service_platform.tests.client.base import BaseClient
 
 class UserClient(BaseClient):
     def __init__(self, client: AsyncClient):
-        super().__init__()
         self.client = client
-
 
     async def me(self, token: str):
         url = "/api/user/me"
