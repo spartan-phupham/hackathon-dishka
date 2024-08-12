@@ -53,7 +53,7 @@ def get_log_config():
             "heath_check": {
                 "()": HealthCheckFilter,
                 "health_check_endpoint": "/api/health/",
-            }
+            },
         },
         "formatters": {
             "default": {
@@ -76,6 +76,30 @@ def get_log_config():
             },
         },
     }
+
+    if settings._environment.lower() == "local":
+        log_config["formatters"]["color"] = {
+            "()": "colorlog.ColoredFormatter",
+            "format": (
+                "%(cyan)s%(asctime)s%(reset)s - "
+                "%(blue)s%(name)s%(reset)s - "
+                "%(log_color)s%(levelname)s%(reset)s - "
+                "%(white)s%(message)s"
+            ),
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+            "log_colors": {
+                "DEBUG": "cyan",
+                "INFO": "green",
+                "WARNING": "yellow",
+                "ERROR": "red",
+                "CRITICAL": "red,bg_white",
+            },
+            "secondary_log_colors": {},
+            "style": "%",
+        }
+        # Use color formatter for console in local environment
+        log_config["handlers"]["console"]["class"] = "colorlog.StreamHandler"
+        log_config["handlers"]["console"]["formatter"] = "color"
 
     log_config["loggers"].update(get_server_loggers())
 
