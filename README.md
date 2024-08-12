@@ -3,6 +3,16 @@
 This is a template project for a python microservice using FastAPI framework.
 Python 3.12 recommended.
 
+## Improvements
+
+- **Implement dependency injection**
+  - Centralize the dependency injection using IoC, with dishka library (Inspired by kotlin template). 
+  - Inject the dependencies into the classes using dependency injection container.
+- **Refactor test**
+  - Implement the test using unittest2
+  - Centralize the test client for reusable purposes
+- **Modify logging on local environment**
+  - Add color on logging when running on local environment
 ## Structure
 
 ```shell
@@ -56,7 +66,7 @@ Python 3.12 recommended.
 
 ```shell
 python3 -m venv .venv
-source .venv/bin/active
+source .venv/bin/activate
 ```
 
 ## Setting
