@@ -5,6 +5,8 @@ Python 3.12 recommended.
 
 ## Improvements
 
+- **This project is still under development**
+
 - **Implement dependency injection**
   - Centralize the dependency injection using IoC, with dishka library (Inspired by kotlin template). 
   - Inject the dependencies into the classes using dependency injection container.
